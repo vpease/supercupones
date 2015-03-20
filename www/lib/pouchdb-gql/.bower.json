@@ -1,0 +1,15 @@
+{
+  "name": "pouchdb-gql",
+  "homepage": "https://github.com/pouchdb/GQL",
+  "version": "1.0.0",
+  "_release": "1.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v1.0.0",
+    "commit": "6c8ef039a0cc1fd0845436f5a3e3222be653d266"
+  },
+  "_source": "git://github.com/pouchdb/GQL.git",
+  "_target": "~1.0.0",
+  "_originalSource": "pouchdb-gql",
+  "_direct": true
+}
