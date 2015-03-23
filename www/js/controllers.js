@@ -1,18 +1,44 @@
 /**
  * Created by control on 3/16/2015.
  */
-control = angular.module('controllers',['ionic.contrib.ui.tinderCards']);
+control = angular.module('controllers',['ionic.contrib.ui.tinderCards','services']);
+control.controller('StatusCtrl',function($scope,Cupones){
+    $scope.cordovaStatus = Cupones.CordovaStatus();
+    $scope.posicionStatus = Cupones.PositionStatus();
+    $scope.dataStatus = Cupones.DataStatus();
+    $scope.replicateStatus = Cupones.ReplicateStatus();
+
+    $scope.updateStatus= function(){
+        $scope.cordovaStatus = Cupones.CordovaStatus();
+        $scope.posicionStatus = Cupones.PositionStatus();
+        $scope.dataStatus= Cupones.DataStatus();
+        $scope.replicateStatus = Cupones.ReplicateStatus();
+    };
+    refrescar = function(){
+        var timeout=1;
+        setTimeout(function(){
+            $scope.updateStatus();
+            console.log('Actualizando controlador');
+            if (!Cupones.fase0completed()){
+                this.refrescar();
+            };
+        },timeout);
+    }
+    refrescar();
+});
 control.controller('AppCtrl',function($scope){
     $scope.alertar=function(){
         alert('Click');
     }
 });
-control.controller('MainCtrl',function($scope,TDCardDelegate){
-    var cardTypes =[
+control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
+    /*var cardTypes =[
         {image: 'img/pic2.jpg',title:'So much grass #hippster'},
         {image: 'img/pic3.jpg',title:'Way too much sand, right?'},
         {image: 'img/pic4.jpg',title:'Beatiful sky from wherever'}
-    ];
+    ];*/
+    var cardTypes = cards.rows;
+    $scope.position= Cupones.getLocation();
     $scope.cards = [];
     $scope.saltar = function(){
         var card = TDCardDelegate.getSwipeableCard($scope);
@@ -29,6 +55,7 @@ control.controller('MainCtrl',function($scope,TDCardDelegate){
     $scope.cardDestroyed = function(index){
         $scope.cards.splice(index,1);
         console.log('Card removed');
+        console.log('quedan en el deck: '+ TDCardDelegate.length)
     };
     $scope.transitionOut = function(card) {
         console.log('card transition out');
@@ -50,5 +77,19 @@ control.controller('MainCtrl',function($scope,TDCardDelegate){
         newCard.id = Math.random();
         $scope.cards.push(angular.extend({},newCard));
     };
-    for(var i=0;i<3;i++) $scope.addCard(i);
+    getCover = function(){
+        angular.forEach(cardTypes,function(card){
+            Cupones.getAttach(card.doc._id,Object.keys(card.doc._attachments)[0])
+                .then (function (result){
+                card.doc.tipo = result;
+                //console.log(result);
+                //console.log('cover del comic cargado');
+
+            },function (error){
+                console.log('problemas con el cover del comic')
+            });
+        });
+    };
+    getCover();
+    for(var i=0;i<cardTypes.length;i++) $scope.addCard(i);
 });

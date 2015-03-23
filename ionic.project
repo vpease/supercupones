@@ -1,6 +1,6 @@
 {
   "name": "supercupones",
-  "app_id": "",
+  "app_id": "6e64b60a",
   "gulpStartupTasks": [
     "sass",
     "watch"

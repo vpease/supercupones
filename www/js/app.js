@@ -14,35 +14,48 @@ app.run(function($ionicPlatform,$location,$cordovaBackgroundGeolocation,Cupones)
         }
         console.log("App is ready!!");
         window.localStorage['cordovaready']='true';
-        Cupones.setCordova(window.localStorage['cordovaready']);
+        Cupones.setCordovaStatus(window.localStorage['cordovaready']);
+        console.log('Cordova listo!!!!');
+        Cupones.data();
         try{
             Cupones.setLocation();
         } catch (error){
             console.log('Error en la captura de localización'+ JSON.stringify(error));
         };
-        console.log('La posición es:'+ JSON.stringify(Cupones.getLocation()));
-        Cupones.data();
+
     });
 });
 app.run(function($rootScope,$location,Cupones){
     $rootScope.$on('dbinit:uptodate',function(){
+        Cupones.setDataStatus(true);
         ready = window.localStorage['cordovaready']||'false';
         console.log('Terminó la syncronizacion de diseño y ahora cordova es:'+ ready);
-        while (ready=='false') {
+
+        /*while (ready=='false') {
             ready = window.localStorage['cordovaready']||'false';
             console.log('Esperando a Cordova!!');
-        } //$location.path('/tab/cats');
-        $rootScope.$apply();
+        }*/
         Cupones.replicate();
+        Cupones.fase1iniciar();
+    });
+    $rootScope.$on('init:position',function(){
+        console.log('Position listo!!!!!');
+        Cupones.setLocationStatus(true);
+        Cupones.fase1iniciar();
     });
     $rootScope.$on('db:uptodate',function(){
         console.log('Terminó la syncronizacion de datos');
-        //$location.path('/tab/dash');
-        $rootScope.$apply();
+        Cupones.setReplicateStatus(true);
+        Cupones.fase1iniciar();
     });
 });
 app.config(function($stateProvider, $urlRouterProvider) {
     $stateProvider
+        .state('status',{
+            url: "/status",
+            templateUrl:"templates/status.html",
+            controller: "StatusCtrl"
+        })
         .state('app', {
             url: "/app",
             abstract: true,
@@ -56,8 +69,14 @@ app.config(function($stateProvider, $urlRouterProvider) {
                     templateUrl: "templates/main.html",
                     controller: 'MainCtrl'
                 }
+            },
+            resolve:{
+                cards: function(Cupones){
+                    res = Cupones.getUltimos(0,20);
+                    return res;
+                }
             }
         });
         // if none of the above states are matched, use this as the fallback
-        $urlRouterProvider.otherwise('/app/main');
+        $urlRouterProvider.otherwise('/status');
 });

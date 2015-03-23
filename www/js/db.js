@@ -6,7 +6,7 @@ var data=angular.module('db',[]);
 data.factory('DB',function($q,$rootScope) {
     var self = this;
     self.db;
-    self.remoteserver = 'http://192.168.1.100:5984/supercupones';
+    self.remoteserver = 'http://192.168.1.100:5984/';
     self.dbname = 'supercupones';
     self.init = function() {
         if (!self.db) {
@@ -22,14 +22,15 @@ data.factory('DB',function($q,$rootScope) {
                 });
                 console.log('Usando: ' + self.db.adapter);
             } else {
-                console.log('Usando websql');
+                console.log('Usando :'+ self.db.adapter);
             }
             self.db.compact({},function(){
                 console.log('db compactada');
+                $rootScope.$broadcast('dbinit:uptodate');
+                $rootScope.$apply();
             });
-            //PouchDB.debug.enable('*');
-            $rootScope.$broadcast('dbinit:uptodate');
-            $rootScope.$apply();
+            PouchDB.debug.enable('*');
+
             //self.initial();
             // console.log('ya se grabó');
         }
@@ -69,8 +70,19 @@ data.factory('DB',function($q,$rootScope) {
         }
     };
     self.replicate = function(){
+        console.log('Iniciando la replicación');
+        var remote =self.remoteserver+self.dbname;
+        console.log('servidor remoto es: '+remote);
+        var info;
+        self.db.info().then(function(result){
+            info = result;
+            console.log('db local es: '+ JSON.stringify(info));
+        }).catch(function(err){
+            console.log('Error en la db.info '+ err);
+        });
+
         var sync = self.db.replicate.from(
-            self.remoteserver,
+            remote,
             {live:false, retry:true})
             .on('paused',function(info){
                 console.log('Estoy en el estado paused');
@@ -80,9 +92,9 @@ data.factory('DB',function($q,$rootScope) {
                 console.log('Cambios en la base de datos'+JSON.stringify(info));
             })
             .on('complete',function(info){
-                var timeout = 600000;
+                var timeout = 60000;
                 console.log('Sync data complete'+JSON.stringify(info));
-                if (info.docs_written>0) timeout=6000000;
+                if (info.docs_written>0) timeout=600000;
                 setTimeout(function(){
                     console.log('sync nuevamente');
                     self.replicate();

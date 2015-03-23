@@ -3,9 +3,13 @@ var service = angular.module('services', ['db','ngCordova'])
 /**
  * A simple example service that returns some data.
  */
-service.factory('Cupones', function($q,$cordovaBackgroundGeolocation,DB) {
-    var CordovaReady=false;
-    var LocReady=false;
+service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$location,DB) {
+    self.CordovaReady = false;
+    self.LocReady = false;
+    self.DataReady = false;
+    self.ReplicateReady = false;
+    self.ReplicateComplete = false;
+
     var cats = [
         { _id: 'cat1', tipo: 'catalogo', avatar: 'img/cats/avatar01.png', class:'cat01', name: 'Marvel', image:'img/cats/cat01.png', color: 'red'},
         { _id: 'cat2', tipo: 'catalogo', avatar: 'img/cats/avatar02.png', class:'cat02', name: 'DC',image:'img/cats/cat02.png', color: 'blue' },
@@ -15,63 +19,80 @@ service.factory('Cupones', function($q,$cordovaBackgroundGeolocation,DB) {
         { _id: 'cat6', tipo: 'catalogo', avatar: 'img/cats/avatar06.png', class:'cat06', name: 'VUK',image:'img/cats/cat06.png', color: 'black' },
           { _id: 'cat7', tipo: 'catalogo', avatar: 'img/cats/avatar07.png', class:'cat07', name: 'Skecthboy',image:'img/cats/cat07.png', color: 'white' }
       ];
-    var location={
-        url: 'http://only.for.android.com/update_location.json', // <-- Android ONLY:  your server url to send locations to
-        params: {
-            auth_token: 'user_secret_auth_token',    //  <-- Android ONLY:  HTTP POST params sent to your server when persisting locations.
-            foo: 'bar'                              //  <-- Android ONLY:  HTTP POST params sent to your server when persisting locations.
-        },
-        notificationTitle: 'Background tracking', // <-- android only, customize the title of the notification
-        notificationText: 'ENABLED', // <-- android only, customize the text of the notification
-        activityType: 'AutomotiveNavigation',
-        bearing:"0.0",
-        longitude: "",
-        recorded_at:"2015-03-20T02:36Z",
-        latitude: "",
-        speed:"0.0",
-        accuracy:"30.0",
-        altitude:"0.0",
-        stopOnTerminate: "true"
-    };
+    var location={};
   return {
+      CordovaStatus: function(){
+          return self.CordovaReady;
+      },
+      PositionStatus: function(){
+          return self.LocReady;
+      },
+      DataStatus: function(){
+          return self.DataReady;
+      },
+      ReplicateStatus: function(){
+          return self.ReplicateComplete;
+      },
+      setDataStatus: function(status){
+          self.DataReady=status;
+      },
       getLocation: function(){
           return location;
       },
-      setCordova: function(status){
+      setCordovaStatus: function(status){
           if (status=="true"){
-              CordovaReady = true;
+              self.CordovaReady = true;
           }
       },
+      setReplicateStatus: function(status){
+          self.ReplicateComplete=status;
+      },
+      fase0completed: function(){
+          console.log('Estado de cordova es: '+self.CordovaReady);
+          console.log('Estado de Posición es: '+self.LocReady);
+          console.log('Estado de Datos es: '+self.DataReady);
+          console.log('Estado de Replicación es: '+self.ReplicateComplete);
+          return (self.CordovaReady && self.LocReady && self.DataReady && self.ReplicateComplete);
+      },
+      setLocationStatus: function(status){
+          self.LocReady = status;
+      },
       setLocation: function(){
-		  alert('El valor de CordovaReady es: '+JSON.stringify(CordovaReady));
-          if (CordovaReady) {
-			  alert('Dentro de  CordovaReady es: '+JSON.stringify(CordovaReady));
+		  //alert('El valor de CordovaReady es: '+JSON.stringify(CordovaReady));
+          if (self.CordovaReady) {
+			  //alert('Dentro de  CordovaReady es: '+JSON.stringify(CordovaReady));
               var options = {
-                  desiredAccuracy: 100,
-                  stationaryRadius: 500,
-                  debug: false
+                  timeout: 10000,
+                  enableHighAccuracy: false
               };
-              $cordovaBackgroundGeolocation.configure(options)
-                  .then(null,
-                  function(err){
-                      console.log('error en la location');
-                      alert('Ubicación KO');
-                  },
-                  function(ploc){
-                      location = ploc;
-                      console.log('Posicion encontrada: '+ JSON.stringify(location));
-                      LocReady = true;
-                      alert('Ubicación Ok: '+JSON.stringify(location));
-                      $cordovaBackgroundGeolocation.stop();
-                  });
+              $cordovaGeolocation
+                  .getCurrentPosition(options)
+                  .then(function(position){
+                      location = position;
+                      $timeout(function(){
+                          console.log('posición conseguida: '+ JSON.stringify(position));
+                          $rootScope.$broadcast('init:position');
+                          $rootScope.$apply();
+                      });
+                  },function(err){
+                      console.log('Error en posicion: '+JSON.stringify(err));
+                  })
           };
-          alert('Ubicación final: '+JSON.stringify(location));
+          //alert('Ubicación final: '+JSON.stringify(location));
       },
       data: function(){
           DB.init();
       },
       replicate: function() {
           DB.replicate();
+          self.ReplicateReady= true;
+      },
+      fase1iniciar: function(){
+          if (this.fase0completed()){
+              $location.path('/app/main');
+              $rootScope.$apply();
+              //if (!self.ReplicateReady) this.replicate();
+          };
       },
       getDB: function(key){
           var dfd = $q.defer();
@@ -84,36 +105,14 @@ service.factory('Cupones', function($q,$cordovaBackgroundGeolocation,DB) {
           });
           return dfd.promise;
       },
-      getCatalogos: function(){
-          var dfd = $q.defer();
-          DB.getAll({startkey: 'cat',endkey:'cat\uffff',include_docs:true})
-              .then(function(result){
-                  console.log('Recuperando catálogos');
-                  dfd.resolve(result);
-              },function(error){
-                  console.log('Error en getCatalogos: '+error);
-              });
-          return dfd.promise;
-      },
-      getColecciones: function(catid){
-          var dfd = $q.defer();
-          DB.getView('comics/colecciones',{startkey:[catid,{}],endkey:[catid], include_docs:true,descending:true})
-              .then(function(result){
-                  console.log('Recuperando colecciones');
-                  dfd.resolve(result);
-              },function(error){
-                  console.log('Error en getColecciones:'+error);
-              });
-          return dfd.promise;
-      },
       getUltimos: function(salto,limite){
-          var dfd =$q.defer();
-          DB.getView('comics/ultimos',{skip:salto, limit:limite, descending:true,include_docs:true})
+          var dfd = $q.defer();
+          DB.getView('cupones/ultimos',{skip: salto,limit:limite,descending:false,include_docs:true})
               .then(function(result){
-                  console.log('Recuperando Ultimos');
+                  console.log('Recuperando ultimos');
                   dfd.resolve(result);
               },function(error){
-                  console.log('Error en getUltimo:'+error);
+                  console.log('Error en getUltimos: '+error);
               });
           return dfd.promise;
       },
