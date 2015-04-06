@@ -15,7 +15,7 @@ control.controller('StatusCtrl',function($scope,Cupones){
         $scope.replicateStatus = Cupones.ReplicateStatus();
     };
     refrescar = function(){
-        var timeout=1;
+        var timeout=3000;
         setTimeout(function(){
             $scope.updateStatus();
             console.log('Actualizando controlador');
