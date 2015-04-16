@@ -23,7 +23,7 @@ control.controller('StatusCtrl',function($scope,Cupones){
                 this.refrescar();
             };
         },timeout);
-    }
+    };
     refrescar();
 });
 control.controller('AppCtrl',function($scope){

@@ -25,11 +25,11 @@
   "dependencies": {
     "collide": "1.0.0-beta.3"
   },
-  "_release": "e8035bffa5",
+  "_release": "cb3dc85d2d",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "e8035bffa5c4f59870fd56e2a2c87834b9d25d46"
+    "commit": "cb3dc85d2d07ba3da3d2ad9933ba4265a539d53f"
   },
   "_source": "git://github.com/driftyco/ionic-contrib-tinder-cards.git",
   "_target": "*",

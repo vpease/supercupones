@@ -6,8 +6,10 @@ var data=angular.module('db',[]);
 data.factory('DB',function($q,$rootScope) {
     var self = this;
     self.db;
-    self.remoteserver = 'http://192.168.1.100:5984/';
-    self.dbname = 'supercupones';
+    self.key = 'allycdowerstrowstenterea';
+    self.pass = 'nXYslAm4kCISa2iT7kDwHlme'
+    self.remoteserver = 'http://'+self.key+':'+self.pass+'@'+'supercupones.supermio.com/';
+    self.dbname = '';
     self.init = function() {
         if (!self.db) {
             console.log('database is closed');
