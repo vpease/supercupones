@@ -15,7 +15,7 @@ control.controller('StatusCtrl',function($scope,Cupones){
         $scope.replicateStatus = Cupones.ReplicateStatus();
     };
     refrescar = function(){
-        var timeout=3000;
+        var timeout=2000;
         setTimeout(function(){
             $scope.updateStatus();
             console.log('Actualizando controlador');
@@ -46,11 +46,13 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
     };
     $scope.cardSwipedLeft = function(index){
         console.log('Left swipe');
-        alert('Left');
+        alert('Left '+index);
     };
     $scope.cardSwipedRight = function(index){
         console.log('Right swipe');
-        alert('Right');
+        alert('Right '+ index);
+        card = $scope.cards[index];
+        alert(JSON.stringify(card));
     };
     $scope.cardDestroyed = function(index){
         $scope.cards.splice(index,1);

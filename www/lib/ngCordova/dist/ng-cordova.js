@@ -1559,7 +1559,10 @@ angular.module('ngCordova.plugins.facebook', [])
     this.browserInit = function (id, version) {
       this.appID = id;
       this.appVersion = version || "v2.0";
-      facebookConnectPlugin.browserInit(this.appID, this.appVersion);
+      ionic.Platform.ready(function(){
+        facebookConnectPlugin.browserInit(this.appID, this.appVersion);
+      });
+
     };
 
     this.$get = ['$q', function ($q) {
