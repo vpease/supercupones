@@ -10,15 +10,18 @@ data.factory('DB',function($q,$rootScope) {
     self.pass = 'nXYslAm4kCISa2iT7kDwHlme'
     self.remoteserver = 'http://'+self.key+':'+self.pass+'@'+'supercupones.supermio.com/';
     self.dbname = '';
-    self.init = function() {
+    self.localdb = 'supercupones';
+    self.usuario = '';
+    self.init = function(usuario) {
+        self.usuario = usuario;
         if (!self.db) {
             console.log('database is closed');
-            self.db = new PouchDB(self.dbname,{
+            self.db = new PouchDB(self.localdb,{
                 adapter: 'websql',
                 size: 50,
                 auto_compaction:true});
             if (!self.db.adapter){
-                self.db  = new PouchDB(self.dbname,{
+                self.db  = new PouchDB(self.localdb,{
                     size: 50,
                     auto_compation: true
                 });
@@ -28,6 +31,7 @@ data.factory('DB',function($q,$rootScope) {
             }
             self.db.compact({},function(){
                 console.log('db compactada');
+                self.put(self.usuario);
                 $rootScope.$broadcast('dbinit:uptodate');
                 $rootScope.$apply();
             });
@@ -49,7 +53,7 @@ data.factory('DB',function($q,$rootScope) {
             var cont = 0;
             dumpFiles.forEach(function (dumpFile) {
                 console.log('Cargando archivo: '+dumpFile);
-                self.db.load('data/' + dumpFile)
+                self.db.load('data/' + dumpFile,{proxy: self.remoteserver})
                     .then(function(){
                         cont+=1;
                         window.localStorage['cont']=cont;
@@ -85,7 +89,7 @@ data.factory('DB',function($q,$rootScope) {
 
         var sync = self.db.replicate.from(
             remote,
-            {live:false, retry:true})
+            {live:false, retry:true, filter:"cupones/per_user", query_params: {'agent':'vpease'}})
             .on('paused',function(info){
                 console.log('Estoy en el estado paused');
                 //$rootScope.$broadcast('db:uptodate');

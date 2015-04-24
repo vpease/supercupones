@@ -1,14 +1,15 @@
-var service = angular.module('services', ['db','ngCordova'])
+var service = angular.module('services', ['db','ngCordova','Super']);
 
 /**
  * A simple example service that returns some data.
  */
-service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$location,DB) {
+service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$location,DB,Super) {
     self.CordovaReady = false;
     self.LocReady = false;
     self.DataReady = false;
     self.ReplicateReady = false;
     self.ReplicateComplete = false;
+    self.usuario=''
 
     var cats = [
         { _id: 'cat1', tipo: 'catalogo', avatar: 'img/cats/avatar01.png', class:'cat01', name: 'Marvel', image:'img/cats/cat01.png', color: 'red'},
@@ -80,8 +81,14 @@ service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$
           };
           //alert('Ubicación final: '+JSON.stringify(location));
       },
+      getUsuario: function(){
+          if (self.usuario==''){
+              self.usuario = Super.getUsuario();
+          };
+          return self.usuario;
+      },
       data: function(){
-          DB.init();
+          DB.init(this.getUsuario());
       },
       replicate: function() {
           DB.replicate();
@@ -155,6 +162,28 @@ service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$
       },
       put: function(object){
           DB.put(object);
+      },
+      putLocalPref: function(state,object){
+          var history='';
+          if (state=='show'){
+              object.coupon =object._id;
+              object._id = Super.getLocalId();
+              object.group = 'user';
+              object.user = this.getUsuario()._id;
+              object.state = 'show';
+              object.history =[];
+              history = {'state':'show','time':Super.getLocalNow('short')};
+          }
+          if (state=='like'){
+              object.state = 'like';
+              history = {'state':'like','time':Super.getLocalNow('short')};
+          }
+          if (state=='dislike'){
+              object.state = 'like';
+              history = {'state':'like','time':Super.getLocalNow('short')};
+          }
+          object.history.push(history);
+          this.put(object);
       },
       all: function() {
           var dfd = $q.defer();

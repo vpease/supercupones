@@ -4,7 +4,7 @@
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
 var app = angular.module('supercupones', ['ionic','controllers','services','ngCordova']);
-app.run(function($ionicPlatform,$location,$cordovaBackgroundGeolocation,$cordovaFacebookProvider,Cupones) {
+app.run(function($ionicPlatform,$location,$cordovaBackgroundGeolocation,Cupones) {
     $ionicPlatform.ready(function() {
         if(window.cordova && window.cordova.plugins.Keyboard) {
             cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
@@ -16,10 +16,6 @@ app.run(function($ionicPlatform,$location,$cordovaBackgroundGeolocation,$cordova
         window.localStorage['cordovaready']='true';
         Cupones.setCordovaStatus(window.localStorage['cordovaready']);
         console.log('Cordova listo!!!!');
-        if (window.cordova.platformId == "browser") {
-            $cordovaFacebookProvider.browserInit('828104337264633', version);
-            // version is optional. It refers to the version of API you may want to use.
-        }
         Cupones.data();
         try{
             Cupones.setLocation();
@@ -52,11 +48,7 @@ app.run(function($rootScope,$location,Cupones){
         Cupones.fase1iniciar();
     });
 });
-app.config(function($cordovaFacebookProvider) {
-    var appID = 828104337264633;
-    var version = "v2.0"; // or leave blank and default is v2.0
-    $cordovaFacebookProvider.browserInit(appID, version);
-});
+
 app.config(function($stateProvider, $urlRouterProvider) {
     $stateProvider
         .state('status',{
@@ -80,7 +72,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
             },
             resolve:{
                 cards: function(Cupones){
-                    res = Cupones.getUltimos(0,20);
+                    res = Cupones.getUltimos(0,1);
                     return res;
                 }
             }

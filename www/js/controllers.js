@@ -2,7 +2,7 @@
  * Created by control on 3/16/2015.
  */
 control = angular.module('controllers',['ionic.contrib.ui.tinderCards','services']);
-control.controller('StatusCtrl',function($scope,Cupones){
+control.controller('StatusCtrl',function($scope,$timeout,Cupones){
     $scope.cordovaStatus = Cupones.CordovaStatus();
     $scope.posicionStatus = Cupones.PositionStatus();
     $scope.dataStatus = Cupones.DataStatus();
@@ -16,12 +16,12 @@ control.controller('StatusCtrl',function($scope,Cupones){
     };
     refrescar = function(){
         var timeout=2000;
-        setTimeout(function(){
+        $timeout(function(){
             $scope.updateStatus();
             console.log('Actualizando controlador');
             if (!Cupones.fase0completed()){
                 this.refrescar();
-            };
+            }
         },timeout);
     };
     refrescar();
@@ -75,8 +75,9 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
     };
     $scope.addCard = function(i){
         //var newCard = cardTypes[Math.floor(Math.random()* cardTypes.length)];
-        var newCard = cardTypes[i];
-        newCard.id = Math.random();
+        var newCard = cardTypes[i].doc;
+        newCard.id = newCard.doc._id;
+        Cupones.putLocalPref('show',cardTypes[i].doc);
         $scope.cards.push(angular.extend({},newCard));
     };
     getCover = function(){
@@ -91,7 +92,8 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
                 console.log('problemas con el cover del comic')
             });
         });
+        for(var i=0;i<cardTypes.length;i++) $scope.addCard(i);
     };
     getCover();
-    for(var i=0;i<cardTypes.length;i++) $scope.addCard(i);
+
 });
