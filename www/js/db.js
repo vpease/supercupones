@@ -87,7 +87,7 @@ data.factory('DB',function($q,$rootScope) {
             console.log('Error en la db.info '+ err);
         });
 
-        var sync = self.db.replicate.from(
+        var sync = self.db.sync(
             remote,
             {live:false, retry:true, filter:"cupones/per_user", query_params: {'agent':'vpease'}})
             .on('paused',function(info){

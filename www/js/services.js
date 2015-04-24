@@ -166,7 +166,8 @@ service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$
       putLocalPref: function(state,object){
           var history='';
           if (state=='show'){
-              object.coupon =object._id;
+              object.tipo="preferencia";
+              object.cupon =object._id;
               object._id = Super.getLocalId();
               object.group = 'user';
               object.user = this.getUsuario()._id;

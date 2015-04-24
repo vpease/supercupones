@@ -46,13 +46,12 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
     };
     $scope.cardSwipedLeft = function(index){
         console.log('Left swipe');
-        alert('Left '+index);
+        Cupones.putLocalPref('dislike',cardTypes[index].doc);
     };
     $scope.cardSwipedRight = function(index){
         console.log('Right swipe');
-        alert('Right '+ index);
+        Cupones.putLocalPref('like',cardTypes[index].doc);
         card = $scope.cards[index];
-        alert(JSON.stringify(card));
     };
     $scope.cardDestroyed = function(index){
         $scope.cards.splice(index,1);
@@ -76,15 +75,22 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
     $scope.addCard = function(i){
         //var newCard = cardTypes[Math.floor(Math.random()* cardTypes.length)];
         var newCard = cardTypes[i].doc;
-        newCard.id = newCard.doc._id;
+        newCard.id = newCard._id;
         Cupones.putLocalPref('show',cardTypes[i].doc);
+        $scope.cards.push(angular.extend({},newCard));
+    };
+    $scope.addCard = function(object){
+        //var newCard = cardTypes[Math.floor(Math.random()* cardTypes.length)];
+        var newCard = object.doc;
+        Cupones.putLocalPref('show',object.doc);
         $scope.cards.push(angular.extend({},newCard));
     };
     getCover = function(){
         angular.forEach(cardTypes,function(card){
             Cupones.getAttach(card.doc._id,Object.keys(card.doc._attachments)[0])
                 .then (function (result){
-                card.doc.tipo = result;
+                card.doc.image = result;
+                $scope.addCard(card);
                 //console.log(result);
                 //console.log('cover del comic cargado');
 
@@ -92,7 +98,9 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
                 console.log('problemas con el cover del comic')
             });
         });
-        for(var i=0;i<cardTypes.length;i++) $scope.addCard(i);
+        for(var i=0;i<cardTypes.length;i++) {
+            //$scope.addCard(i)
+        }
     };
     getCover();
 
