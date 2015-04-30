@@ -3,12 +3,12 @@
  */
 var data=angular.module('db',[]);
 
-data.factory('DB',function($q,$rootScope) {
+data.factory('DB',function($q,$rootScope,$timeout) {
     var self = this;
     self.db;
-    self.key = 'allycdowerstrowstenterea';
-    self.pass = 'nXYslAm4kCISa2iT7kDwHlme'
-    self.remoteserver = 'http://'+self.key+':'+self.pass+'@'+'supercupones.supermio.com/';
+    self.key = 'allycdowerstrowstenterea:';
+    self.pass = 'nXYslAm4kCISa2iT7kDwHlme@';
+    self.remoteserver = 'http://'+self.key+self.pass+'supercupones.supermio.com';
     self.dbname = '';
     self.localdb = 'supercupones';
     self.usuario = '';
@@ -89,10 +89,17 @@ data.factory('DB',function($q,$rootScope) {
 
         var sync = self.db.sync(
             remote,
-            {live:false, retry:true, filter:"cupones/per_user", query_params: {'agent':'vpease'}})
+            {live:false, retry:true, filter:'cupones/per_user',query_params:{'agent':self.usuario._id}})
             .on('paused',function(info){
                 console.log('Estoy en el estado paused');
-                //$rootScope.$broadcast('db:uptodate');
+                console.log('Live Sync data complete: '+JSON.stringify(info));
+                /*var timeout = 60000;
+                //if (info.docs_written>0) timeout=600000;
+                $timeout(function(){
+                    console.log('sync nuevamente');
+                    self.replicate();
+                },timeout);*/
+                $rootScope.$broadcast('db:uptodate');
             })
             .on('change',function(info){
                 console.log('Cambios en la base de datos'+JSON.stringify(info));
@@ -101,7 +108,7 @@ data.factory('DB',function($q,$rootScope) {
                 var timeout = 60000;
                 console.log('Sync data complete'+JSON.stringify(info));
                 if (info.docs_written>0) timeout=600000;
-                setTimeout(function(){
+                $timeout(function(){
                     console.log('sync nuevamente');
                     self.replicate();
                 },timeout);

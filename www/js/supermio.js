@@ -58,14 +58,19 @@ angular.module('Super',['ngCordova'])
             return phoy;
         },
         getUsuario: function(){
+            this.set();
+            console.log('USER: Iniciando la busqueda del usuario: '+JSON.stringify(self.mobile));
             if (self.usuario==''){
+                console.log('USER: El usuario está en blanco');
                 if (self.mobile){
+                    console.log('USER: Estoy en un movil');
                     uuid = $cordovaDevice.getUUID();
                     platform = $cordovaDevice.getPlatform();
                     model = $cordovaDevice.getModel();
                     version= $cordovaDevice.getVersion();
                     fecha = this.getLocalNow('long');
                 } else {
+                    console.log('USER: no estoy en un movil');
                     uuid = 'localhost';
                     platform = 'computer';
                     model = 'superlaptop';
@@ -78,9 +83,11 @@ angular.module('Super',['ngCordova'])
                     'fecha': fecha,
                     'platform': platform,
                     'model': model,
-                    'version': version
+                    'version': version,
+                    'group':uuid
                 };
             }
+            console.log('USER:El usuario es: '+JSON.stringify(self.usuario));
             return self.usuario;
         },
         getLocalId: function(){

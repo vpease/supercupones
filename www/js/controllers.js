@@ -15,7 +15,8 @@ control.controller('StatusCtrl',function($scope,$timeout,Cupones){
         $scope.replicateStatus = Cupones.ReplicateStatus();
     };
     refrescar = function(){
-        var timeout=2000;
+        var timeout=1000;
+        if (!($scope.cordovaStatus && $scope.posicionStatus && $scope.dataStatus && $scope.replicateStatus))
         $timeout(function(){
             $scope.updateStatus();
             console.log('Actualizando controlador');
@@ -37,7 +38,8 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
         {image: 'img/pic3.jpg',title:'Way too much sand, right?'},
         {image: 'img/pic4.jpg',title:'Beatiful sky from wherever'}
     ];*/
-    var cardTypes = cards.rows;
+    var cardTypes = cards;
+    $scope.cardsLoaded = false;
     $scope.position= Cupones.getLocation();
     $scope.cards = [];
     $scope.saltar = function(){
@@ -51,12 +53,15 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
     $scope.cardSwipedRight = function(index){
         console.log('Right swipe');
         Cupones.putLocalPref('like',cardTypes[index].doc);
-        card = $scope.cards[index];
     };
     $scope.cardDestroyed = function(index){
         $scope.cards.splice(index,1);
         console.log('Card removed');
-        console.log('quedan en el deck: '+ TDCardDelegate.length)
+        console.log('quedan en el deck: '+ TDCardDelegate.length);
+        Cupones.getUltimos(0,1).then(function(result){
+            cardTypes = result;
+            getCover();
+        });
     };
     $scope.transitionOut = function(card) {
         console.log('card transition out');
@@ -84,12 +89,13 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
         var newCard = object.doc;
         Cupones.putLocalPref('show',object.doc);
         $scope.cards.push(angular.extend({},newCard));
+        $scope.cardsLoaded = true;
     };
     getCover = function(){
         angular.forEach(cardTypes,function(card){
             Cupones.getAttach(card.doc._id,Object.keys(card.doc._attachments)[0])
                 .then (function (result){
-                card.doc.image = result;
+                card.doc.image=result;
                 $scope.addCard(card);
                 //console.log(result);
                 //console.log('cover del comic cargado');
@@ -98,9 +104,9 @@ control.controller('MainCtrl',function($scope,TDCardDelegate,Cupones,cards){
                 console.log('problemas con el cover del comic')
             });
         });
-        for(var i=0;i<cardTypes.length;i++) {
-            //$scope.addCard(i)
-        }
+        /*for(var i=0;i<cardTypes.length;i++) {
+            $scope.addCard(i)
+        }*/
     };
     getCover();
 

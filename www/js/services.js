@@ -1,9 +1,9 @@
-var service = angular.module('services', ['db','ngCordova','Super']);
+var service = angular.module('services', ['db','ngCordova','Super','Cupon']);
 
 /**
  * A simple example service that returns some data.
  */
-service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$location,DB,Super) {
+service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$location,DB,Super,Cupon) {
     self.CordovaReady = false;
     self.LocReady = false;
     self.DataReady = false;
@@ -114,10 +114,48 @@ service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$
       },
       getUltimos: function(salto,limite){
           var dfd = $q.defer();
-          DB.getView('cupones/ultimos',{skip: salto,limit:limite,descending:false,include_docs:true})
+          //DB.getView('cupones/ultimos',{skip: salto,limit:limite,descending:false,include_docs:true})
+          DB.getView('cupones/ultimos',{descending:false,include_docs:true})
               .then(function(result){
                   console.log('Recuperando ultimos');
-                  dfd.resolve(result);
+                  var temp = new Cupon(result.rows[0]);
+                  for(var i=1;i<result.total_rows;i++){
+                      var current = new Cupon(result.rows[i]);
+                      if (temp=='') {
+                          if (current.isCupon()) temp = current;
+                          else {
+                              if (!current.isUsed()){
+                                  temp = current;
+                                  break;
+                              }
+                          }
+                      }
+                      else {
+                          if (current.isPreferencia()){
+                              if (temp.getCuponID() == current.getCuponID()){
+                                  if (current.isUsed()) {
+                                      temp='';
+                                      continue;
+                                  } else {
+                                      temp = current;
+                                      break;
+                                  }
+                              } else {
+                                  break;
+                              }
+                          }
+                          if ((current.isCupon())&&(temp.isPreferencia())){
+                              if ((temp.getCuponID() == current.getCuponID()) && (temp.isUsed())) temp='';
+                              else {
+                                  temp = current;
+                                  break;
+                              }
+                          } else break;
+                      }
+                  }
+                  var res = [];
+                  if (temp!="") res.push(angular.extend({},temp.getObject()));
+                  dfd.resolve(res);
               },function(error){
                   console.log('Error en getUltimos: '+error);
               });
@@ -165,25 +203,34 @@ service.factory('Cupones', function($q,$cordovaGeolocation,$rootScope,$timeout,$
       },
       putLocalPref: function(state,object){
           var history='';
-          if (state=='show'){
-              object.tipo="preferencia";
-              object.cupon =object._id;
-              object._id = Super.getLocalId();
-              object.group = 'user';
-              object.user = this.getUsuario()._id;
-              object.state = 'show';
-              object.history =[];
-              history = {'state':'show','time':Super.getLocalNow('short')};
-          }
           if (state=='like'){
               object.state = 'like';
               history = {'state':'like','time':Super.getLocalNow('short')};
           }
           if (state=='dislike'){
-              object.state = 'like';
-              history = {'state':'like','time':Super.getLocalNow('short')};
+              object.state = 'dislike';
+              history = {'state':'dislike','time':Super.getLocalNow('short')};
           }
-          object.history.push(history);
+          if (object.tipo=="cupon") {
+              if (state=='show'){
+                  object.tipo="preferencia";
+                  object.cupon =object._id;
+                  object._id = Super.getLocalId();
+                  object.group = 'user';
+                  object.user = this.getUsuario()._id;
+                  object.state = 'show';
+                  object.history =[];
+                  history = {'state':'show','time':Super.getLocalNow('short')};
+              }
+              object.history.push(history);
+          } else {
+              if (state=='show'){
+                  object.tipo="preferencia";
+                  object.state = 'show';
+              } else {
+                  object.history.push(history);
+              }
+          }
           this.put(object);
       },
       all: function() {
